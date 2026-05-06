@@ -65,19 +65,6 @@
             <path d="M5 2h14a3 3 0 0 1 3 3v17H2V5a3 3 0 0 1 3-3z"></path>
           </svg>
         </span>
-        <span class="zy-svg" @click="miniEvent" v-show="!onlineUrl && right.list.length > 0">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="diamondIconTitle">
-            <title id="diamondIconTitle">精简模式</title>
-            <path d="M12 20L3 11M12 20L21 11M12 20L8 11M12 20L16 11M3 11L7 5M3 11H8M7 5L8 11M7 5H12M17 5L21 11M17 5L16 11M17 5H12M21 11H16M8 11H16M8 11L12 5M16 11L12 5"></path>
-          </svg>
-        </span>
-        <span class="zy-svg" @click="playWithExternalPalyerEvent" v-show="!onlineUrl && right.list.length > 0">
-          <svg role="img" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-labelledby="tvIconTitle">
-            <title id="tvIconTitle" >使用第三方播放器</title>
-            <polygon points="20 8 20 20 4 20 4 8"></polygon>
-            <polyline stroke-linejoin="round" points="8 4 12 7.917 16 4"></polyline>
-          </svg>
-        </span>
         <span class="zy-svg" @click="shareEvent" v-show="right.list.length > 0">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="qrIconTitle">
             <title id="qrIconTitle">分享</title>
@@ -150,19 +137,6 @@
             <circle cx="12" cy="9" r="5"></circle>
             <circle cx="9" cy="14" r="5"></circle>
             <circle cx="15" cy="14" r="5"></circle>
-          </svg>
-        </span>
-        <span class="zy-svg" @click="miniEvent">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="diamondIconTitle">
-            <title id="diamondIconTitle">精简模式</title>
-            <path d="M12 20L3 11M12 20L21 11M12 20L8 11M12 20L16 11M3 11L7 5M3 11H8M7 5L8 11M7 5H12M17 5L21 11M17 5L16 11M17 5H12M21 11H16M8 11H16M8 11L12 5M16 11L12 5"></path>
-          </svg>
-        </span>
-        <span class="zy-svg" @click="playWithExternalPalyerEvent">
-          <svg role="img" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-labelledby="tvIconTitle">
-            <title id="tvIconTitle" >使用第三方播放器</title>
-            <polygon points="20 8 20 20 4 20 4 8"></polygon>
-            <polyline stroke-linejoin="round" points="8 4 12 7.917 16 4"></polyline>
           </svg>
         </span>
         <span class="zy-svg" @click="showShortcutEvent" :class="right.type === 'shortcut' ? 'active' : ''">
@@ -257,13 +231,8 @@ import HlsJsPlayer from 'xgplayer-hls.js'
 import FlvJsPlayer from 'xgplayer-flv.js'
 import mt from 'mousetrap'
 import Clickoutside from 'element-ui/src/utils/clickoutside'
-import { exec, execFile } from 'child_process'
 import PinyinMatch from 'pinyin-match'
 
-const { clipboard } = require('electron')
-const remote = require('@electron/remote')
-const win = remote.getCurrentWindow()
-const URL = require('url')
 const VIDEO_DETAIL_CACHE = {}
 
 const addPlayerBtn = function (event, svg, attrs) {
@@ -344,7 +313,7 @@ export default {
         videoTitle: true,
         airplay: true,
         closeVideoTouch: true,
-        ignores: ['replay', 'error'], // 为了切换播放器类型时避免显示错误刷新，暂时忽略错误
+        ignores: ['replay', 'error'],
         preloadTime: 300
       },
       state: {
@@ -359,7 +328,6 @@ export default {
       scroll: false,
       isStar: false,
       miniMode: false,
-      mainWindowBounds: {},
       searchTxt: '',
       channelList: [],
       channelTree: [],
@@ -368,9 +336,9 @@ export default {
         label: 'label',
         children: 'children'
       },
-      startPosition: { min: '00', sec: '00' }, // 对应调略输入框
+      startPosition: { min: '00', sec: '00' },
       endPosition: { min: '00', sec: '00' },
-      skipendStatus: false, // 是否跳过了片尾
+      skipendStatus: false,
       currentShortcutList: [],
       onlineUrl: '',
       playerType: 'hls',
@@ -507,7 +475,7 @@ export default {
     fmtMSS (s) {
       return (s - (s %= 60)) / 60 + (s > 9 ? ':' : ':0') + s
     },
-    leadingZero (time) { // 格式化单个调略输入框
+    leadingZero (time) {
       Object.keys(time).forEach(key => {
         if (time[key] > 59 || time[key] < 0) {
           time[key] = '00'
@@ -543,7 +511,6 @@ export default {
       }
 
       if (this.video.iptv) {
-        // 是直播源，直接播放
         this.playChannel(this.video.iptv)
       } else {
         this.state.showChannelList = false
@@ -555,12 +522,12 @@ export default {
         this.startPosition = { min: '00', sec: '00' }
         this.endPosition = { min: '00', sec: '00' }
         if (db) {
-          if (!time && db.index === index) { // 如果video.info.time没有设定的话，从历史中读取时间进度
+          if (!time && db.index === index) {
             time = db.time
           }
           if (!VIDEO_DETAIL_CACHE[key]) VIDEO_DETAIL_CACHE[key] = {}
           if (!this.video.info.videoFlag) this.video.info.videoFlag = db.videoFlag
-          if (db.startPosition) { // 数据库保存的时长通过快捷键设置时可能为小数, this.startPosition为object对应输入框分秒转化到数据库后肯定为整数
+          if (db.startPosition) {
             VIDEO_DETAIL_CACHE[key].startPosition = db.startPosition
             this.startPosition = { min: '' + parseInt(db.startPosition / 60), sec: '' + parseInt(db.startPosition % 60) }
           }
@@ -597,11 +564,12 @@ export default {
         channelList.add(ele)
         this.right.sources = ele.channels.filter(e => e.isActive)
       }
-      this.changingIPTV = true // 避免二次执行playChannel
+      this.changingIPTV = true
       this.video.iptv = channel
       this.name = channel.name
       const supportFormats = /\.(m3u8|flv)$/
-      const extRE = channel.url.match(supportFormats) || new URL.URL(channel.url).pathname.match(supportFormats)
+      const urlObj = new URL(channel.url)
+      const extRE = channel.url.match(supportFormats) || urlObj.pathname.match(supportFormats)
       this.getPlayer(extRE[1])
       if (extRE[1] === 'flv') this.xg.config.isLive = true
       this.xg.src = channel.url
@@ -619,7 +587,7 @@ export default {
     async getPlayer (playerType, force = false) {
       if (!force && this.playerType === playerType) return
       if (this.playerType !== 'flv') {
-        this.xg.src = '' // https://developers.google.com/web/updates/2017/06/play-request-was-interrupted#danger-zone
+        this.xg.src = ''
         this.config.url = ''
       }
       try {
@@ -639,15 +607,13 @@ export default {
       this.playerInstall()
       this.bindEvent()
       this.playerType = playerType
-      if (this.miniMode) { await this.saveMiniWindowState(); this.miniEvent() }
     },
     playVideo (index = 0, time = 0) {
       this.isLive = false
       this.isStar = false
       this.exportablePlaylist = false
       this.fetchPlaylist().then(async (fullList) => {
-        let playlist = fullList[0].list // ZY支持的已移到首位
-        // 如果设定了特定的video flag, 获取该flag下的视频列表
+        let playlist = fullList[0].list
         const videoFlag = this.video.info.videoFlag
         if (videoFlag) {
           playlist = fullList.find(x => x.flag === videoFlag).list
@@ -693,7 +659,7 @@ export default {
             this.video.info.time = 0
             this.video.info.index++
           }
-          this.xg.off('ended') // 明明是once为何会触发多次，得注销掉以真正只执行一次
+          this.xg.off('ended')
         })
       })
     },
@@ -763,14 +729,14 @@ export default {
       this.updateStar()
       if (!isOnline) this.timerEvent()
     },
-    async setProgressDotEvent (position, timespan, text) { // 根据跳略时长在进度条上添加标记, position为位置, timespan为时长，text为标记文本(title)
+    async setProgressDotEvent (position, timespan, text) {
       const key = this.video.key + '@' + this.video.info.id
       const db = await history.find({ site: this.video.key, ids: this.video.info.id })
       if (db && this.xg && this.right.list.length > 1) {
         this[position] = { min: '' + parseInt(timespan / 60), sec: '' + parseInt(timespan % 60) }
         const positionTime = position === 'endPosition' ? this.xg.duration - timespan : timespan
         if (db[position]) this.xg.removeProgressDot(position === 'endPosition' ? this.xg.duration - db[position] : db[position])
-        if (parseInt(this[position].min) || parseInt(this[position].sec)) this.xg.addProgressDot(positionTime, text) // 均为0时不添加标记
+        if (parseInt(this[position].min) || parseInt(this[position].sec)) this.xg.addProgressDot(positionTime, text)
         const doc = { ...db }
         doc[position] = timespan
         delete doc.id
@@ -778,7 +744,7 @@ export default {
         VIDEO_DETAIL_CACHE[key][position] = timespan
       }
     },
-    async setProgressDotByInput () { // 对应调略输入框后的“确定”
+    async setProgressDotByInput () {
       this.xg.removeAllProgressDot()
       const startTime = parseInt(this.startPosition.min) * 60 + parseInt(this.startPosition.sec)
       const endTime = parseInt(this.endPosition.min) * 60 + parseInt(this.endPosition.sec)
@@ -904,37 +870,6 @@ export default {
         info: this.video.info
       }
     },
-    async miniEvent () {
-      if (!this.miniMode) this.mainWindowBounds = JSON.parse(JSON.stringify(win.getBounds()))
-      let miniWindowBounds
-      await mini.find().then(res => { if (res) miniWindowBounds = res.bounds })
-      if (!miniWindowBounds) miniWindowBounds = { x: win.getPosition()[0], y: win.getPosition()[1], width: 550, height: 340 }
-      win.setBounds(miniWindowBounds)
-      this.xg.getCssFullscreen()
-      document.querySelector('xg-btn-quitMiniMode').style.display = 'block'
-      this.miniMode = true
-    },
-    async saveMiniWindowState () {
-      await mini.find().then(res => {
-        let doc = {}
-        doc = {
-          id: 0,
-          bounds: win.getBounds()
-        }
-        if (res) {
-          mini.update(doc)
-        } else {
-          mini.add(doc)
-        }
-      })
-    },
-    async exitMiniEvent () {
-      await this.saveMiniWindowState()
-      win.setBounds(this.mainWindowBounds)
-      this.xg.exitCssFullscreen()
-      document.querySelector('xg-btn-quitMiniMode').style.display = 'none'
-      this.miniMode = false
-    },
     shareEvent () {
       this.share = {
         show: true,
@@ -953,63 +888,38 @@ export default {
         playerState: this.xg.readyState || '',
         networkState: this.xg.networkState || ''
       }
-      clipboard.writeText(JSON.stringify(info, null, 4))
-      this.$message.success('视频信息复制成功')
+      // 使用uni-app剪贴板API替代electron clipboard
+      // #ifdef APP-PLUS
+      uni.setClipboardData({
+        data: JSON.stringify(info, null, 4),
+        success: () => {
+          this.$message.success('视频信息复制成功')
+        }
+      })
+      // #endif
+      // #ifndef APP-PLUS
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(JSON.stringify(info, null, 4)).then(() => {
+          this.$message.success('视频信息复制成功')
+        })
+      } else {
+        this.$message.info('请手动复制调试信息')
+      }
+      // #endif
     },
     playWithExternalPalyerEvent () {
-      const fs = require('fs')
-      const externalPlayer = this.setting.externalPlayer
+      // 在移动端/电视端，使用系统浏览器打开或调用外部播放器
       if (this.video.iptv) {
-        if (!externalPlayer) {
-          this.$message.error('请设置第三方播放器路径')
-          return
-        }
-        if (fs.existsSync(externalPlayer)) {
-          execFile(externalPlayer, [this.video.iptv.url])
-        } else {
-          exec(externalPlayer, [this.video.iptv.url])
-        }
+        // #ifdef APP-PLUS
+        plus.runtime.openURL(this.video.iptv.url)
+        // #endif
       } else {
         const playlistUrls = this.right.list.map(e => e.split('$')[1])
-        if (!externalPlayer) {
-          this.$message.error('请设置第三方播放器路径')
-          // 在线播放该视频
-          if (playlistUrls[this.video.info.index].endsWith('.m3u8')) {
-            const link = 'http://hunlongyu.gitee.io/zy-player-web?url=' + playlistUrls[this.video.info.index] + '&name=' + this.video.info.name
-            const open = require('open')
-            open(link)
-          }
-        } else {
-          let playlist
-          if (playlistUrls.every(e => e.endsWith('.m3u8'))) {
-            playlist = this.generateM3uFile(this.video.info.name, playlistUrls, this.video.info.index)
-          } else {
-            playlist = playlistUrls[this.video.info.index]
-          }
-          if (fs.existsSync(externalPlayer)) {
-            execFile(externalPlayer, [playlist])
-          } else {
-            exec(externalPlayer, [playlist])
-          }
-        }
+        const url = playlistUrls[this.video.info.index]
+        // #ifdef APP-PLUS
+        plus.runtime.openURL(url)
+        // #endif
       }
-    },
-    generateM3uFile (fileName, m3u8Arr, startIndex) {
-      const path = require('path')
-      const os = require('os')
-      const fs = require('fs')
-      const filePath = path.join(os.tmpdir(), fileName + '.m3u')
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath)
-      }
-      let str = '#EXTM3U' + os.EOL
-      for (let ind = startIndex; ind < m3u8Arr.length; ind++) {
-        str += `#EXTINF: -1, 第${ind + 1}集` + os.EOL
-        str += m3u8Arr[ind] + os.EOL
-      }
-      str += '#EXT-X-ENDLIST' + os.EOL
-      fs.writeFileSync(filePath, str)
-      return filePath
     },
     closeListEvent () {
       const lastRightType = this.right.type
@@ -1068,7 +978,6 @@ export default {
     listItemEvent (n) {
       if (this.video.iptv) {
         const channel = this.channelList[n]
-        // 是直播源，直接播放
         this.playChannel(channel)
       } else {
         this.video.info.time = 0
@@ -1103,7 +1012,6 @@ export default {
       this.right.other = []
       const currentSite = await sites.find({ key: this.video.key })
       sites.all().then(sitesRes => {
-        // 排除已关闭的源和当前源
         for (const siteItem of sitesRes.filter(x => x.isActive && x.group === currentSite.group && x.key !== this.video.key)) {
           zy.search(siteItem.key, this.name).then(searchRes => {
             const type = Object.prototype.toString.call(searchRes)
@@ -1136,7 +1044,6 @@ export default {
       this.right.show = true
     },
     async otherItemEvent (e) {
-      // 打开当前播放的剧集index, 定位到当前的时间
       this.video = { key: e.key, info: { id: e.id, name: e.name, site: e.site, index: this.video.info.index, time: this.right.currentTime } }
     },
     mtEvent () {
@@ -1211,13 +1118,8 @@ export default {
         return false
       }
       if (e === 'top') {
-        if (this.appState.windowIsOnTop) {
-          win.setAlwaysOnTop(false)
-          this.appState.windowIsOnTop = false
-        } else {
-          win.setAlwaysOnTop(true)
-          this.appState.windowIsOnTop = true
-        }
+        // 置顶功能在移动端/电视端不适用
+        this.appState.windowIsOnTop = !this.appState.windowIsOnTop
         return false
       }
       if (e === 'fullscreen') {
@@ -1229,9 +1131,6 @@ export default {
         return false
       }
       if (e === 'escape') {
-        if (this.miniMode) {
-          this.exitMiniEvent()
-        }
         if (this.xg.fullscreen) {
           this.xg.exitFullscreen()
           this.xg.exitCssFullscreen()
@@ -1271,18 +1170,8 @@ export default {
         this.clearPosition()
         return false
       }
-      if (e === 'opacityUp') {
-        const num = win.getOpacity()
-        if (num > 0.1) {
-          win.setOpacity(num - 0.1)
-        }
-        return false
-      }
-      if (e === 'opacityDown') {
-        const num = win.getOpacity()
-        if (num < 1) {
-          win.setOpacity(num + 0.1)
-        }
+      if (e === 'opacityUp' || e === 'opacityDown') {
+        // 透明度调节在移动端/电视端不适用
         return false
       }
       if (e === 'playbackRateUp') {
@@ -1304,18 +1193,10 @@ export default {
         return false
       }
       if (e === 'mini') {
-        if (!this.miniMode) {
-          this.miniEvent()
-        } else {
-          this.exitMiniEvent()
-        }
+        // 精简模式在移动端/电视端不适用
         return false
       }
       if (e === 'resetMini') {
-        if (this.miniMode) {
-          const miniWindowBounds = { x: this.mainWindowBounds.x, y: this.mainWindowBounds.y, width: 550, height: 340 }
-          win.setBounds(miniWindowBounds)
-        }
         return false
       }
     },
@@ -1339,7 +1220,7 @@ export default {
         document.querySelector('xg-btn-showlist').appendChild(ul)
         ul.addEventListener('click', (ev) => {
           ev = ev || window.event
-          const target = ev.target || ev.srcElement // target表示在事件冒泡中触发事件的源元素，在IE中是srcElement
+          const target = ev.target || ev.srcElement
           if (target.nodeName.toLowerCase() === 'li') {
             this.listItemEvent(parseInt(target.dataset.index))
           }
@@ -1348,7 +1229,6 @@ export default {
       ul.style.display = 'none'
       let li = ''
       if (this.video.iptv) {
-        // 直播频道列表
         let index = 0
         this.channelList.forEach(e => {
           if (e.prefer === this.video.iptv.id) {
@@ -1399,7 +1279,7 @@ export default {
         document.querySelector('xg-btn-showhistory').appendChild(ul)
         ul.addEventListener('click', (ev) => {
           ev = ev || window.event
-          const target = ev.target || ev.srcElement // target表示在事件冒泡中触发事件的源元素，在IE中是srcElement
+          const target = ev.target || ev.srcElement
           if (target.nodeName.toLowerCase() === 'li') {
             this.historyItemEvent(this.right.history[parseInt(target.dataset.index)])
           }
@@ -1438,7 +1318,6 @@ export default {
       })
     },
     bindEvent () {
-      // 直播卡顿时换源换台
       let stallIptvTimeout
       let stallCount = 0
       this.xg.on('waiting', () => {
@@ -1480,7 +1359,7 @@ export default {
         const key = this.video.key + '@' + this.video.info.id
         if (VIDEO_DETAIL_CACHE[key] && VIDEO_DETAIL_CACHE[key].endPosition) {
           const time = this.xg.duration - VIDEO_DETAIL_CACHE[key].endPosition - this.xg.currentTime
-          if (time > 0 && time < 0.3) { // timeupdate每0.25秒触发一次，只有自然播放到该点时才会跳过片尾
+          if (time > 0 && time < 0.3) {
             if (!this.skipendStatus) {
               this.skipendStatus = true
               this.xg.emit('ended')
@@ -1506,12 +1385,11 @@ export default {
       })
 
       this.xg.on('videoStop', async () => {
-        if (this.miniMode) await this.exitMiniEvent()
         this.videoStop()
       })
 
       this.xg.on('quitMiniMode', () => {
-        if (this.miniMode) this.exitMiniEvent()
+        // 精简模式在移动端/电视端不适用
       })
 
       const ev = ['click', 'touchend', 'mousemove']
@@ -1523,7 +1401,6 @@ export default {
             videoTitle.style.display = 'block'
             clearTimeout(timerID)
             timerID = setTimeout(() => {
-              // 播放中自动消失
               if (this.xg && !this.xg.paused) {
                 videoTitle.style.display = 'none'
               }
@@ -1540,7 +1417,6 @@ export default {
         clearTimeout(stallIptvTimeout)
         if (!this.video.key) {
           if (!this.video.iptv && !this.video.info.ids) {
-            // 如果当前播放页面的播放信息没有被赋值,播放历史记录
             if (this.right.history.length === 0) {
               this.$message.error('历史记录为空，无法播放！')
               this.videoStop()
@@ -1569,18 +1445,6 @@ export default {
       this.getAllhistory()
       if (this.playerType === 'flv') this.xg.destroy()
       this.getPlayer('hls', true)
-    },
-    minMaxEvent () {
-      win.on('minimize', () => {
-        if (this.xg && this.xg.hasStart && this.setting.pauseWhenMinimize) {
-          this.xg.pause()
-        }
-      })
-      win.on('restore', () => {
-        if (this.xg && this.xg.hasStart) {
-          this.xg.play()
-        }
-      })
     },
     playerInstall () {
       Player.install('playPrev', function () {
@@ -1637,7 +1501,6 @@ export default {
     this.config.volume = db.volume ? db.volume : 0.6
     this.xg = new HlsJsPlayer(this.config)
     this.bindEvent()
-    this.minMaxEvent()
   },
   beforeDestroy () {
     clearInterval(this.timer)

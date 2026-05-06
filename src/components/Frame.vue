@@ -15,7 +15,6 @@
   </div>
 </template>
 <script>
-const remote = require('@electron/remote')
 export default {
   name: 'frame',
   computed: {
@@ -30,19 +29,22 @@ export default {
   },
   methods: {
     frameClickEvent (e) {
-      const win = remote.getCurrentWindow()
       if (e === 'min') {
-        win.minimize()
+        // 最小化 - 在移动端/电视端不适用，保留方法避免报错
+        console.log('minimize not supported in mobile/tv')
       }
       if (e === 'max') {
-        win.isMaximized() ? win.unmaximize() : win.maximize()
+        // 最大化 - 在移动端/电视端不适用
+        console.log('maximize not supported in mobile/tv')
       }
       if (e === 'close') {
-        win.destroy()
+        // 关闭应用
+        // #ifdef APP-PLUS
+        uni.exit()
+        // #endif
       }
       if (e === 'top') {
         this.appState.windowIsOnTop = !this.appState.windowIsOnTop
-        win.setAlwaysOnTop(this.appState.windowIsOnTop)
       }
     }
   }
@@ -56,7 +58,6 @@ export default {
   user-select: none;
   align-items: center;
   justify-content: flex-end;
-  -webkit-app-region: drag;
   span{
     width: 14px;
     height: 14px;
@@ -66,7 +67,6 @@ export default {
     text-align: center;
     line-height: 14px;
     display: inline-block;
-    -webkit-app-region: no-drag;
   }
 }
 </style>

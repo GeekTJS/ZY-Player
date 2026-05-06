@@ -73,7 +73,7 @@ export default new Vuex.Store({
     SET_APPSTATE: (state, payload) => {
       state.appState = payload
     },
-    set_DetailCache: (state, payload) => {
+    SET_DetailCache: (state, payload) => {
       state.DetailCache = payload
     }
   }

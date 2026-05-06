@@ -3,28 +3,9 @@ import axios from 'axios'
 import parser from 'fast-xml-parser'
 import cheerio from 'cheerio'
 import { Parser as M3u8Parser } from 'm3u8-parser'
-// import FLVDemuxer from 'xgplayer-flv.js/src/flv/demux/flv-demuxer.js'
 import SocksProxyAgent from 'socks-proxy-agent'
 
-// axios使用系统代理  https://evandontje.com/2020/04/02/automatic-system-proxy-configuration-for-electron-applications/
-// xgplayer使用chromium代理设置，浏览器又默认使用系统代理 https://www.chromium.org/developers/design-documents/network-settings
-// 要在设置中添加代理设置，可参考https://stackoverflow.com/questions/37393248/how-connect-to-proxy-in-electron-webview
-const http = require('http')
-const https = require('http')
-const remote = require('@electron/remote')
-const win = remote.getCurrentWindow()
-const session = win.webContents.session
-const ElectronProxyAgent = require('electron-proxy-agent')
-const URL = require('url')
-const request = require('request')
-let proxyURL
-
-// 取消axios请求  浅析cancelToken https://juejin.cn/post/6844904168277147661 https://masteringjs.io/tutorials/axios/cancel
-// const source = axios.CancelToken.source()
-// const cancelToken = source.token
-
 // 请求超时时限
-// axios.defaults.timeout = 10000 // 可能使用代理，增长超时
 const TIMEOUT = 20000
 
 // 重试次数，共请求2次
@@ -381,7 +362,7 @@ const zy = {
               throw new Error()
             }
           }).catch((err) => {
-            err.info = '无法获取到下载链接，请通过播放页面点击“调试”按钮获取'
+            err.info = '无法获取到下载链接，请通过播放页面点击"调试"按钮获取'
             reject(err)
           })
         } else {
@@ -398,7 +379,7 @@ const zy = {
               throw new Error()
             }
           }).catch((err) => {
-            err.info = '无法获取到下载链接，请通过播放页面点击“调试”按钮获取'
+            err.info = '无法获取到下载链接，请通过播放页面点击"调试"按钮获取'
             reject(err)
           })
         }
@@ -430,28 +411,14 @@ const zy = {
   checkChannel (url) {
     return new Promise((resolve, reject) => {
       const supportFormats = /\.(m3u8|flv)$/
-      const extRE = url.match(supportFormats) || new URL.URL(url).pathname.match(supportFormats)
+      const urlObj = new URL(url)
+      const extRE = url.match(supportFormats) || urlObj.pathname.match(supportFormats)
       if (extRE[1] === 'flv') {
-        const MAX_CONTENT_LENGTH = 2000 // axios配置maxContentLength不生效，先用request凑合
-        let receivedLength = 0
-        let options = { uri: url, gzip: true, timeout: 10000 }
-        if (proxyURL) {
-          if (proxyURL.startsWith('http')) options = Object.assign({ proxy: proxyURL }, options)
-          if (proxyURL.startsWith('socks5')) options = Object.assign({ agent: new SocksProxyAgent(proxyURL) }, options)
-        }
-        const req = request.get(options)
-          .on('data', (str) => {
-            receivedLength += str.length
-            if (receivedLength > MAX_CONTENT_LENGTH) {
-              resolve(true) // 应该用FLVDemuxer.probe来检测，先凑合
-              req.abort()
-            }
-          })
-          .on('error', function (err) {
-            resolve(false)
-            console.log(err)
-          })
-          .on('end', () => { resolve(false) })
+        axios.get(url, { timeout: 10000, maxContentLength: 2000 }).then(res => {
+          resolve(true)
+        }).catch(() => {
+          resolve(false)
+        })
       } else if (extRE[1] === 'm3u8') {
         axios.get(url).then(res => {
           const manifest = res.data
@@ -571,26 +538,12 @@ const zy = {
     })
   },
   proxy () {
-    return new Promise((resolve, reject) => {
-      setting.find().then(db => {
-        if (db && db.proxy && db.proxy.type === 'manual') {
-          if (db.proxy.scheme && db.proxy.url && db.proxy.port) {
-            proxyURL = db.proxy.scheme + '://' + db.proxy.url.trim() + ':' + db.proxy.port.trim()
-            session.setProxy({ proxyRules: proxyURL })
-            http.globalAgent = https.globalAgent = new ElectronProxyAgent(session)
-          }
-        } else {
-          proxyURL = ''
-          session.setProxy({ proxyRules: 'direct://' })
-          http.globalAgent = https.globalAgent = new ElectronProxyAgent(session)
-        }
-        // 不要删了，留着测试用
-        // axios.get('https://api.my-ip.io/ip').then(res => console.log(res))
-      })
+    // 在uni-app环境中，代理设置通过manifest.json配置
+    // 此方法保留但不做实际操作
+    return new Promise((resolve) => {
+      resolve()
     })
   }
 }
-
-zy.proxy()
 
 export default zy

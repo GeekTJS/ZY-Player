@@ -1,0 +1,25 @@
+{
+	"pages": [
+		{
+			"path": "src/pages/index/index",
+			"style": {
+				"navigationBarTitleText": "ZY Player"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "ZY Player",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"condition" : {
+		"list": [
+			{
+				"name": "",
+				"path": "",
+				"query": ""
+			}
+		]
+	}
+}

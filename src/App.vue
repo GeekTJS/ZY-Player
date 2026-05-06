@@ -22,7 +22,6 @@
 
 <script>
 import { setting } from './lib/dexie'
-const remote = require('@electron/remote')
 export default {
   name: 'App',
   data () {
@@ -40,44 +39,9 @@ export default {
     // 窗口创建口，检查是否有窗口大小位置的记录，如果有的话，更新窗口位置及大小
     setting.find().then(res => {
       if (res.restoreWindowPositionAndSize) {
-        var win = remote.getCurrentWindow()
-        win.setBounds({
-          x: res.windowPositionAndSize.x,
-          y: res.windowPositionAndSize.y,
-          width: res.windowPositionAndSize.width,
-          height: res.windowPositionAndSize.height
-        })
-        this.winSizePosition = {
-          x: win.getPosition()[0],
-          y: win.getPosition()[1],
-          width: win.getSize()[0],
-          height: win.getSize()[1]
-        }
+        this.winSizePosition = res.windowPositionAndSize || {}
       }
     })
-  },
-  updated () {
-    // 本来想hook up到beforedestroy， 但不工作
-    // 每当窗口更新时，检查窗口大小及位置，记录到setting数据库中
-    if (this.setting.restoreWindowPositionAndSize) {
-      const win = remote.getCurrentWindow()
-      var newWinSizePosition = {
-        x: win.getPosition()[0],
-        y: win.getPosition()[1],
-        width: win.getSize()[0],
-        height: win.getSize()[1]
-      }
-      if (newWinSizePosition.x !== this.winSizePosition.x ||
-        newWinSizePosition.y !== this.winSizePosition.y ||
-        newWinSizePosition.width !== this.winSizePosition.width ||
-        newWinSizePosition.height !== this.winSizePosition.height) {
-        this.winSizePosition = newWinSizePosition
-        setting.find().then(res => {
-          res.windowPositionAndSize = newWinSizePosition
-          setting.update(res)
-        })
-      }
-    }
   },
   computed: {
     view () {
